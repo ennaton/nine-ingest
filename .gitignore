@@ -1,12 +1,6 @@
-.DS_Store
-*.log
-.env
-.env.*
-!.env.example
+/bin/
 /dist/
-/build/
-/tmp/
-/coverage/
-node_modules/
-__pycache__/
-.venv/
+*.out
+coverage.*
+.DS_Store
+.idea/

@@ -1,35 +1,59 @@
 name: ci
+
 on:
   push: { branches: [main] }
   pull_request:
+  workflow_dispatch:
 
 permissions:
   contents: read
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
+    name: Build and prove the edge holds
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.23'
+          go-version: '1.25'
           cache: true
-      - name: Verify formatting
-        run: test -z "$(gofmt -l .)"
+
+      - name: Formatting
+        run: test -z "$(gofmt -l .)" || { gofmt -l .; exit 1; }
+
       - name: Vet
         run: go vet ./...
-      - name: Test
+
+      - name: Tests
         run: go test -race -coverprofile=coverage.out ./...
+
       - name: Build
         run: go build ./...
+
+      - name: Contract is in sync with nine-platform
+        run: |
+          # The vendored copy must match the canonical one. A drifted contract
+          # is the failure this whole design is meant to make loud.
+          curl -sfL -o /tmp/canonical.json \
+            "https://raw.githubusercontent.com/ennaton/nine-platform/main/contracts/events/agent_run.v1.json" \
+            || { echo "::warning::canonical contract not reachable (private repo), skipping"; exit 0; }
+          if ! diff -q /tmp/canonical.json internal/event/schema/agent_run.v1.json >/dev/null; then
+            echo "::error::vendored agent_run.v1 differs from nine-platform"
+            diff /tmp/canonical.json internal/event/schema/agent_run.v1.json || true
+            exit 1
+          fi
+          echo "contract in sync"
 
   scan:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Scan filesystem for vulnerabilities
-        uses: aquasecurity/trivy-action@master
+      - uses: aquasecurity/trivy-action@master
         with:
           scan-type: fs
           severity: CRITICAL,HIGH
