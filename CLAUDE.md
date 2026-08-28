@@ -42,7 +42,9 @@ Removing a field, narrowing an enum or tightening a pattern is a new schema vers
 
 **No em dashes.** Commas and colons instead. The pre-commit hook blocks them.
 
-**Commits.** `type(scope): message`, one line, no `Co-Authored-By`, no generator trailers. Enforced by `githooks/commit-msg`.
+**Commits.** `type(scope): message`, one line, no generator trailers. Enforced by `githooks/commit-msg`.
+
+**Co-authorship is for people.** A commit two of you wrote carries `Co-Authored-By` for the other one. A ping-pong group hands a file back and forth and the commit lands under whoever happened to be holding it, so without the trailer half the work is invisible in the only place it gets counted. The trailer goes in its own block at the end, after a blank line, and the address has to be one GitHub already knows for that person or no credit is applied. A tool is not an author: the same hook that allows the human trailer refuses one naming Claude, Copilot or a bot.
 
 **Never `--no-verify`.** The hooks are the control, not a suggestion. If a hook is wrong, fix the hook in the same commit.
 
